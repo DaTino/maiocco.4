@@ -16,6 +16,7 @@ CS4760 Project 3
 #include <time.h>
 #include <math.h>
 #include <string.h>
+#include "p4header.h"
 
 
 FILE* outfile;
@@ -32,6 +33,17 @@ typedef struct shareClock{
   int secs;
   int nano;
 }shareClock;
+
+//kk make pcb...gonna try implementing share clock struct instead of
+//straight up int pointers to shm
+typedef struct PCB {
+  shareClock totalCPUTime;
+  shareClock totalSystemTime;
+  shareClock timeUsedLastBurst;
+  int simPID;
+  int priority;
+}pcbType;
+
 
 int main(int argc, char *argv[]) {
 
@@ -125,16 +137,9 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
   //here we'll have to write to shared memory...
-  *(shm+0) = 0;
-  *(shm+1) = 0;
-  //this is the shared int
-  *(shm+2) = 0;
-
-  //NEXT TIME ON DRAGON BALL Z- GOKU SETS UP USER.C TO READ SHARED MEMORY.
-  //exec y00zer...
-
-  //Dear Dr. Hauschild- if you make it this far, listen to The 6th Gate by D-Devils and tell me what you think
-  //anyways, Ima set up a  message queue below.
+  *(shm+0) = 0; //sec
+  *(shm+1) = 0; //nsec
+  *(shm+2) = 0; //shared int
 
   //create message queue
   message mb;
@@ -154,17 +159,7 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, interruptHandler);
   alarm(2);
 
-  //so we want one child to deal with this,
-  //then we set up message queue
-  //this part evolves into Critsec at lvl 35. Gotta start grinding!
-
-  //Main loop w/ critical section parts:
-    //check if we should make child
-      //make child
-      //keep track of number of children made
-      //exec w/ child
-    //look for finished children or get update(?) for active children
-
+  //main loop with crit sec parts
   pid_t childpid = 0;
   int status = 0;
   int pid = 0;
@@ -178,7 +173,7 @@ int main(int argc, char *argv[]) {
   }
 
   //main looperino right here!
-  while (total < 100 && /*((int)tend.tv_sec - (int)tstart.tv_sec)*/ *(shm+0) < maxSecs) {
+  while (total < 100 && *(shm+0) < maxSecs) {
     if((childpid = fork()) < 0) {
       perror("./oss: ...it was a stillbirth.");
       if (msgctl(msqid, IPC_RMID, NULL) == -1) {
@@ -188,10 +183,6 @@ int main(int argc, char *argv[]) {
        shmctl(shmid, IPC_RMID, NULL);
       exit(1);
     } else if (childpid == 0) {
-      //local clock time stuff here
-      // double total_nsec = ((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) - ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec);
-      // double total_sec = floor(total_nsec/1e9);
-      // double nsec_part = fmod(total_nsec, 1e9);
       *(shm+1) += nsec;
       if (nsec > 1e9) {
         *(shm+0)+=nsec/1e9;
@@ -209,20 +200,14 @@ int main(int argc, char *argv[]) {
     //don't want to destroy shm too fast, so we wait for child to finish.
     if(proc_count >= maxProc) {
       do {
-        //pid = waitpid(-1, &status, WNOHANG);
         if (*(shm+2) != 0) {
           printf("killed %d\n", *(shm+2));
           fprintf(outfile, "oss: Child pid %d terminated at system clock time %d.%d\n", *(shm+2), *(shm+0), *(shm+1));
           proc_count--;
 	      }
-        // if (pid > 0) {
-        //   proc_count--;
-        // }
       } while(*(shm+2) == 0);
       *(shm+2) = 0;
     }
-	//printf("proc_count: %d\n", proc_count);
-  //clock_gettime(CLOCK_MONOTONIC, &tend);
  }
 
 
