@@ -44,7 +44,7 @@ typedef struct PCB {
   int priority;
 }pcbType;
 
-pcbType newPCB(sharedClock sysClock, int simPID);
+pcbType newPCB(shareClock sysClock, int simPID);
 
 int main(int argc, char *argv[]) {
 
@@ -136,11 +136,11 @@ int main(int argc, char *argv[]) {
   (*scSM).nano = 0; //nsec
 
   //start up our system clock, might not need this since errythang in shared mem
-  sharedClock sysClock;
+  shareClock sysClock;
   sysClock.secs = 0;
   sysClock.nano = 0;
   //start up clock for random times
-  sharedClock randClock;
+  shareClock randClock;
   randClock.secs = 0;
   randClock.nano = 0;
 
@@ -306,7 +306,7 @@ static void interruptHandler() {
   exit(0);
 }
 
-pcbType newPCB(sharedClock sysClock, int simPID) {
+pcbType newPCB(shareClock sysClock, int simPID) {
   pcbType pcb;
   pcb.totalCPUTime.secs = 0;
   pcb.totalCPUTime.nano = 0;
