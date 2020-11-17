@@ -48,7 +48,7 @@ pcbType newPCB(shareClock sysClock, int simPID);
 
 int main(int argc, char *argv[]) {
 
-  int maxProc = 5;
+  int maxProc = 18;
   char* filename = "log.txt";
   int maxSecs = 20;
 
@@ -177,7 +177,10 @@ int main(int argc, char *argv[]) {
   // alarm for max time and ctrl-c
   signal(SIGALRM, interruptHandler);
   signal(SIGINT, interruptHandler);
-  alarm(2);
+  alarm(3);
+
+  //set up our basic round robin queue for 1 pcb, and go from there...
+  queueType *rrq = createQueue(maxProc);
 
   int maxTimeBetweenNewProcsNS;
   int maxTimeBetweenNewProcsSecs;
@@ -200,6 +203,8 @@ int main(int argc, char *argv[]) {
   while (total < 100 && (*scSM).secs < maxSecs) {
 
     pcbType initPCB = newPCB(sysClock, 1); //starting with 1 for the simPID
+    printf("yo dog PCB wif simPID %d and priority %d\n", initPCB.simPID, initPCB.priority);
+
 
     if((childpid = fork()) < 0) {
       perror("./oss: ...it was a stillbirth.");
@@ -318,6 +323,7 @@ pcbType newPCB(shareClock sysClock, int simPID) {
   pcb.simPID = simPID;
 
   //start by simulating real time class, highest priority
+  //dummy this is lowest priority lol. start him off in rrq
   pcb.priority = 0;
   //I'll add the randorinos later, gator.
 
