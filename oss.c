@@ -1,7 +1,7 @@
 /*
 Alberto Maiocco
-CS4760 Project 3
-10/20/2020
+CS4760 Project 4
+11//2020
 */
 
 #include <stdio.h>
@@ -16,7 +16,7 @@ CS4760 Project 3
 #include <time.h>
 #include <math.h>
 #include <string.h>
-#include "p4header.h"
+#include "queue.h"
 
 
 FILE* outfile;
@@ -46,9 +46,6 @@ typedef struct PCB {
 
 
 int main(int argc, char *argv[]) {
-
-  //struct timespec tstart={0,0}, tend={0,0};
-  //clock_gettime(CLOCK_MONOTONIC, &tstart);
 
   int maxProc = 5;
   char* filename = "log.txt";
@@ -139,7 +136,7 @@ int main(int argc, char *argv[]) {
   //here we'll have to write to shared memory...
   *(shm+0) = 0; //sec
   *(shm+1) = 0; //nsec
-  *(shm+2) = 0; //shared int
+  *(shm+2) = 0; //shared int <- this mess will get replaced by simPid in PBC
 
   //create message queue
   message mb;
