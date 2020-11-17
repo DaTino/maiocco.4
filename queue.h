@@ -13,7 +13,7 @@ typedef struct queueType {
 // It initializes size of queue as 0
 queueType* createQueue(unsigned capacity) {
     int i;
-    qStruct* queue = (qStruct*) malloc(sizeof(qStruct));
+    queueType* queue = (queueType*) malloc(sizeof(queueType));
     queue->capacity = capacity;
     queue->front = queue->size = 0;
     queue->rear = capacity - 1;
@@ -31,13 +31,13 @@ int isFull(queueType* queue) {
 }
 
 // Queue is empty when size is 0
-int isEmpty(qStruct* queue) {
+int isEmpty(queueType* queue) {
   return (queue->size == 0);
 }
 
 // Function to add an item to the queue.
 // It changes rear and size
-void enqueue(qStruct* queue, int item)
+void enqueue(queueType* queue, int item)
 {
     if (isFull(queue)) {
         printf("QUEUE IS FULL\n");
