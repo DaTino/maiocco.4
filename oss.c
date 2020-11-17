@@ -227,17 +227,18 @@ int main(int argc, char *argv[]) {
       proc_count++;
     }
 
+    //THIS MESS FOR TOO MANY PROCS. don't think its needed so much.
     //don't want to destroy shm too fast, so we wait for child to finish.
-    if(proc_count >= maxProc) {
-      do {
-        if (*(shm+2) != 0) {
-          printf("killed %d\n", *(shm+2));
-          fprintf(outfile, "oss: Child pid %d terminated at system clock time %d.%d\n", *(shm+2), *(scSM+0), *(scSM+1));
-          proc_count--;
-	      }
-      } while(*(shm+2) == 0);
-      *(shm+2) = 0;
-    }
+    // if(proc_count >= maxProc) {
+    //   do {
+    //     if (*(shm+2) != 0) {
+    //       printf("killed %d\n", *(shm+2));
+    //       fprintf(outfile, "oss: Child pid %d terminated at system clock time %d.%d\n", *(shm+2), *(scSM+0), *(scSM+1));
+    //       proc_count--;
+	  //     }
+    //   } while(*(shm+2) == 0);
+    //   *(shm+2) = 0;
+    // }
  }
 
 
