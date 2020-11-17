@@ -44,6 +44,7 @@ typedef struct PCB {
   int priority;
 }pcbType;
 
+pcbType newPCB(sharedClock sysClock, int simPID);
 
 int main(int argc, char *argv[]) {
 
@@ -169,11 +170,17 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
+  //make a single PCB...
+  pcbType pcb;
+
   //Using the interupt handlers...
   // alarm for max time and ctrl-c
   signal(SIGALRM, interruptHandler);
   signal(SIGINT, interruptHandler);
   alarm(2);
+
+  int maxTimeBetweenNewProcsNS;
+  int maxTimeBetweenNewProcsSecs;
 
   //main loop with crit sec parts
   pid_t childpid = 0;
@@ -191,6 +198,9 @@ int main(int argc, char *argv[]) {
   int cpuWorkTimeConstant = 10000;
   //main looperino right here!
   while (total < 100 && *(scSM+0) < maxSecs) {
+
+    initPCB = newPCB(sysClock, 1) //starting with 1 for the simPID
+
     if((childpid = fork()) < 0) {
       perror("./oss: ...it was a stillbirth.");
       if (msgctl(msqid, IPC_RMID, NULL) == -1) {
@@ -200,10 +210,13 @@ int main(int argc, char *argv[]) {
        shmctl(scSMid, IPC_RMID, NULL);
       exit(1);
     } else if (childpid == 0) {
-      *(scSM+1) += nsec;
+      (*scSM).nano += nsec;
+      //*(scSM+1) += nsec;
       if (nsec > 1e9) {
-        *(scSM+0)+=nsec/1e9;
-        *(scSM+1)-=1e9;
+        (*scSM).secs += nsec/1e9;
+        (*scSM).nano -= 1e9;
+        // *(scSM+0)+=nsec/1e9;
+        // *(scSM+1)-=1e9;
       }
       //printf("oss: Creating new child pid %d at my time %d.%d\n", getpid(), total_sec, nsec_part);
       fprintf(outfile,"oss: Creating new child pid %d at my time %d.%d\n", getpid(), *(scSM+0), *(scSM+1));
@@ -291,4 +304,22 @@ static void interruptHandler() {
   //eliminate any witnesses...
   kill(0, SIGKILL);
   exit(0);
+}
+
+pcbType newPCB(sharedClock sysClock, int simPID) {
+  pcbType pcb;
+  pcb.totalCPUTime.secs = 0;
+  pcb.totalCPUTime.nano = 0;
+  pcb.totalSystemTime.secs = 0;
+  pcb.totalSystemTime.nano = 0;
+  pcb.timeUsedLastBurst.secs = 0;
+  pcb.timeUsedLastBurst.nano = 0;
+  pcb.simPID = simPID;
+
+  //start by simulating real time class, highest priority
+  pcb.priority = 0;
+  //I'll add the randorinos later, gator.
+
+  return pcb;
+
 }
