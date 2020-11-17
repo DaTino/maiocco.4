@@ -116,27 +116,47 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  //next step: set up shared memory!
-  //We'll do share clock with test values 612 and 6633
-  int shmid;
-  key_t key = 1337;
-  int* shm; // <- this should be the shareClock, right? or its the shared int?
+  //gonna need two bits of shared memory now, for pcb and shareclock
+  int scSMid;
+  key_t scSMkey = 1337;
+  shareClock* scSM; // <- this should be the shareClock, right? or its the shared int?
   //create shared mem segment...
-  //sizeof int for seconds and nanoseconds... dont need a struct for clock?
-  //added size to hold shmPID
-  if ((shmid = shmget(key, 3*sizeof(int), IPC_CREAT | 0666)) < 0) {
-    perror("oss: error created shared memory segment.");
+  if ((scSMid = shmget(scSMkey, sizeof(shareClock), IPC_CREAT | 0666)) < 0) {
+    perror("oss: error creating shareClock shared memory segment.");
     exit(1);
   }
   //attach segment to dataspace...
-  if ((shm = shmat(shmid, NULL, 0)) == (int*) -1) {
-    perror("oss: error attaching shared memory.");
+  if ((scSM = shmat(scSMid, NULL, 0)) == (int*) -1) {
+    perror("oss: error attaching shareClock memory.");
     exit(1);
   }
   //here we'll have to write to shared memory...
-  *(shm+0) = 0; //sec
-  *(shm+1) = 0; //nsec
+  (*scSM).secs = 0; //sec
+  (*scSM).nano = 0; //nsec
+
+  //start up our system clock, might not need this since errythang in shared mem
+  sharedClock sysClock;
+  sysClock.secs = 0;
+  sysClock.nano = 0;
+  //start up clock for random times
+  sharedClock randClock;
+  randClock.secs = 0;
+  randClock.nano = 0;
+
   *(shm+2) = 0; //shared int <- this mess will get replaced by simPid in PBC
+
+  //shared mem for PCB...
+  int pcbSMid;
+  key_t pcbSMkey = 80085;
+  shareClock* pcbSM;
+  if ((pcbSMid = shmget(pcbSMkey, sizeof(shareClock), IPC_CREAT | 0666)) < 0) {
+    perror("oss: error creating PCB shared memory segment.");
+    exit(1);
+  }
+  if ((scSM = shmat(scSMid, NULL, 0)) == (int*) -1) {
+    perror("oss: error attaching PCB shared memory.");
+    exit(1);
+  }
 
   //create message queue
   message mb;
@@ -144,7 +164,6 @@ int main(int argc, char *argv[]) {
   strcpy(mb.msgData, "Please work...");
   int msqid;
   key_t msgKey = 612;
-
   if ((msqid = msgget(msgKey, 0666 | IPC_CREAT)) == -1) {
     perror("oss: error creating message queue.");
     exit(1);
@@ -169,24 +188,25 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
+  int cpuWorkTimeConstant = 10000;
   //main looperino right here!
-  while (total < 100 && *(shm+0) < maxSecs) {
+  while (total < 100 && *(scSM+0) < maxSecs) {
     if((childpid = fork()) < 0) {
       perror("./oss: ...it was a stillbirth.");
       if (msgctl(msqid, IPC_RMID, NULL) == -1) {
            perror("oss: msgctl failed to kill the queue");
            exit(1);
        }
-       shmctl(shmid, IPC_RMID, NULL);
+       shmctl(scSMid, IPC_RMID, NULL);
       exit(1);
     } else if (childpid == 0) {
-      *(shm+1) += nsec;
+      *(scSM+1) += nsec;
       if (nsec > 1e9) {
-        *(shm+0)+=nsec/1e9;
-        *(shm+1)-=1e9;
+        *(scSM+0)+=nsec/1e9;
+        *(scSM+1)-=1e9;
       }
       //printf("oss: Creating new child pid %d at my time %d.%d\n", getpid(), total_sec, nsec_part);
-      fprintf(outfile,"oss: Creating new child pid %d at my time %d.%d\n", getpid(), *(shm+0), *(shm+1));
+      fprintf(outfile,"oss: Creating new child pid %d at my time %d.%d\n", getpid(), *(scSM+0), *(scSM+1));
       char *args[]={"./user", NULL};
       execvp(args[0], args);
     } else {
@@ -199,7 +219,7 @@ int main(int argc, char *argv[]) {
       do {
         if (*(shm+2) != 0) {
           printf("killed %d\n", *(shm+2));
-          fprintf(outfile, "oss: Child pid %d terminated at system clock time %d.%d\n", *(shm+2), *(shm+0), *(shm+1));
+          fprintf(outfile, "oss: Child pid %d terminated at system clock time %d.%d\n", *(shm+2), *(scSM+0), *(scSM+1));
           proc_count--;
 	      }
       } while(*(shm+2) == 0);
@@ -208,13 +228,13 @@ int main(int argc, char *argv[]) {
  }
 
 
-  printf("total: %d, time: %d.%d\n", total, *(shm+0), *(shm+1));
+  printf("total: %d, time: %d.%d\n", total, *(scSM+0), *(scSM+1));
   //de-tach and de-stroy shm..
-  printf("And we're back! shm contains %ds and %dns.\n", *(shm+0), *(shm+1));
+  printf("And we're back! shm contains %ds and %dns.\n", *(scSM+0), *(scSM+1));
   //detach shared mem
-  shmdt((void*) shm);
+  shmdt((void*) scSM);
   //delete shared mem
-  shmctl(shmid, IPC_RMID, NULL);
+  shmctl(scSMid, IPC_RMID, NULL);
   //printf("shm has left us for Sto'Vo'Kor\n");
   if (msgctl(msqid, IPC_RMID, NULL) == -1) {
        perror("oss: msgctl failed to kill the queue");
@@ -227,30 +247,42 @@ int main(int argc, char *argv[]) {
 
 static void interruptHandler() {
   key_t key = 1337;
-  int* shm;
-  int shmid;
-  if ((shmid = shmget(key, 2*sizeof(int), IPC_CREAT | 0666)) < 0) {
+  shareClock* scSM;
+  int scSMid;
+  if ((scSMid = shmget(key, sizeof(shareClock), IPC_CREAT | 0666)) < 0) {
     perror("oss: error created shared memory segment.");
     exit(1);
   }
-  if ((shm = shmat(shmid, NULL, 0)) == (int*) -1) {
+  if ((scSM = shmat(scSMid, NULL, 0)) == (shareClock*) -1) {
+    perror("oss: error attaching shared memory.");
+    exit(1);
+  }
+
+  key_t key = 80085;
+  pcbType* pcbSM;
+  int pcbSMid;
+  if ((pcbSMid = shmget(key, sizeof(pcbType), IPC_CREAT | 0666)) < 0) {
+    perror("oss: error created shared memory segment.");
+    exit(1);
+  }
+  if ((pcbSM = shmat(pcbSMid, NULL, 0)) == (pcbType*) -1) {
     perror("oss: error attaching shared memory.");
     exit(1);
   }
 
   int msqid;
   key_t msgKey = 612;
-
   if ((msqid = msgget(msgKey, 0666 | IPC_CREAT)) == -1) {
     perror("oss: error creating message queue.");
     exit(1);
   }
 
   //close file...
-  fprintf(outfile, "Interrupt in yo face @ %ds, %dns\n", *(shm+0), *(shm+1));
+  fprintf(outfile, "Interrupt in yo face @ %ds, %dns\n", *(scSM+0), *(scSM+1));
   fclose(outfile);
   //cleanup shm...
-  shmctl(shmid, IPC_RMID, NULL);
+  shmctl(scSMid, IPC_RMID, NULL);
+  shmctl(pcbSMid, IPC_RMID, NULL);
   //cleanup shared MEMORY
   if (msgctl(msqid, IPC_RMID, NULL) == -1) {
        perror("oss: msgctl failed to kill the queue");
