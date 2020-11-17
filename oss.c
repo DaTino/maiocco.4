@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
   randClock.secs = 0;
   randClock.nano = 0;
 
-  *(shm+2) = 0; //shared int <- this mess will get replaced by simPid in PBC
+  //*(shm+2) = 0; //shared int <- this mess will get replaced by simPid in PBC
 
   //shared mem for PCB...
   int pcbSMid;
@@ -197,9 +197,9 @@ int main(int argc, char *argv[]) {
 
   int cpuWorkTimeConstant = 10000;
   //main looperino right here!
-  while (total < 100 && *(scSM+0) < maxSecs) {
+  while (total < 100 && (*scSM).secs < maxSecs) {
 
-    initPCB = newPCB(sysClock, 1) //starting with 1 for the simPID
+    pcbType initPCB = newPCB(sysClock, 1); //starting with 1 for the simPID
 
     if((childpid = fork()) < 0) {
       perror("./oss: ...it was a stillbirth.");
@@ -259,10 +259,10 @@ int main(int argc, char *argv[]) {
 }
 
 static void interruptHandler() {
-  key_t key = 1337;
+  key_t scSMkey = 1337;
   shareClock* scSM;
   int scSMid;
-  if ((scSMid = shmget(key, sizeof(shareClock), IPC_CREAT | 0666)) < 0) {
+  if ((scSMid = shmget(scSMkey, sizeof(shareClock), IPC_CREAT | 0666)) < 0) {
     perror("oss: error created shared memory segment.");
     exit(1);
   }
@@ -271,10 +271,10 @@ static void interruptHandler() {
     exit(1);
   }
 
-  key_t key = 80085;
+  key_t pcbSMkey = 80085;
   pcbType* pcbSM;
   int pcbSMid;
-  if ((pcbSMid = shmget(key, sizeof(pcbType), IPC_CREAT | 0666)) < 0) {
+  if ((pcbSMid = shmget(pcbSMkey, sizeof(pcbType), IPC_CREAT | 0666)) < 0) {
     perror("oss: error created shared memory segment.");
     exit(1);
   }
