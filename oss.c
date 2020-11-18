@@ -408,7 +408,7 @@ bool canMakeProc(int maxProc, int proc_count, int *simPIDarray, shareClock sysCl
   int availablePID;
   int i;
   for (i=0; i<maxProc; i++) {
-    if simPIDarray[i] == 1) {
+    if (simPIDarray[i] == 1) {
       availablePID = i;
       break;
     }
