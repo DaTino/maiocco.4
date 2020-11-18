@@ -59,8 +59,8 @@ int main(int argc, char *argv[]){
     userNano -= 1e9;
   }
   //update and post back for oss clock, then we use user clock to show user time
-  (*shm+0) = userSecs;
-  (*shm+1) = userNano;
+  *(shm+0) = userSecs;
+  *(shm+1) = userNano;
 
   //user clock update
   userClock.secs = userSecs;
