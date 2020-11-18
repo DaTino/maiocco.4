@@ -184,8 +184,8 @@ int main(int argc, char *argv[]) {
   //set up our basic round robin queue for 1 pcb, and go from there...
   queueType *rrq = createQueue(maxProc);
 
-  int maxTimeBetweenNewProcsNS;
-  int maxTimeBetweenNewProcsSecs;
+  int maxTimeBetweenNewProcsNS = 5*1e9;
+  int maxTimeBetweenNewProcsSecs = 1;
 
   //main loop with crit sec parts
   pid_t childpid = 0;
@@ -197,6 +197,16 @@ int main(int argc, char *argv[]) {
 
   unsigned int sysSecs;
   unsigned int sysNano;
+
+  //arrays for pcbTable, bitstring for simpids, and childPids
+  pcbType pcbTable[18];
+  int simPIDarray[maxProc];
+  int availablePID = 0;
+  int i = 0;
+  for (i=0,i<maxProc;i++) {
+    simPIDarray[i]=1; //changed to 1 for open, plays bettr as beul
+  }
+  int *kidPIDs = malloc(maxProc*sizeof(int));
 
   int cpuWorkTimeConstant = 10000;
   //main looperino right here!
@@ -222,6 +232,14 @@ int main(int argc, char *argv[]) {
       //pcb for child
       pcbType initPCB = newPCB(sysClock, 1); //starting with 1 for the simPID
       printf("yo dog PCB wif simPID %d and priority %d\n", initPCB.simPID, initPCB.priority);
+
+      //find open pid in array
+      for (i=0; i<maxProc; i++) {
+        if simPIDarray[i] == 1) {
+          availablePID = i;
+          break;
+        }
+      } //still need a way deal with not being set...
 
       //so 0 priority goonna go into rrq, and anything higher than that
       //gonna be in mlfq, based on timeslice. implement l8r, sk8r.
@@ -269,8 +287,6 @@ int main(int argc, char *argv[]) {
       int rrqSimPid = dequeue(rrq);
       //int rrqPriority = initPCB.priority; <- now this is out of scope ;(
       int rrqPriority = 0;
-
-
       //need a better way to send messages.
       //well damn procs aint gon run if they aint get message!
       mb.mtype = rrqSimPid;
