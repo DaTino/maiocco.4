@@ -232,6 +232,7 @@ int main(int argc, char *argv[]) {
     //need to determine when/how to make child- what I had before about total proc
     //check time requirement and proc requirement
     if (canMakeProc(maxProc, proc_count, simPIDarray, sysClock, randClock)) {
+      printf("**can make proc!\n");
       // pcbType initPCB = newPCB(sysClock, 1); //starting with 1 for the simPID
       // printf("yo dog PCB wif simPID %d and priority %d\n", initPCB.simPID, initPCB.priority);
 
@@ -274,16 +275,10 @@ int main(int argc, char *argv[]) {
           char simpidstring[16], msgidstring[16];
           sprintf(simpidstring, "%d", availablePID);
           sprintf(msgidstring, "%d", msqid);
-          char *args[]={"./user", simpidstring, msgidstring, NULL};
+          char *args[4]={"./user", simpidstring, msgidstring, NULL};
+          printf("execing %s\n", )
           execvp(args[0], args);
           exit(0);
-          // (*scSM).nano += nsec;
-          // //*(scSM+1) += nsec;
-          // if (nsec > 1e9) {
-          //   (*scSM).secs += nsec/1e9;
-          //   (*scSM).nano -= 1e9;
-          //   // *(scSM+0)+=nsec/1e9;
-          //   // *(scSM+1)-=1e9;
       }
       printf("oss: Creating new child pid %d at my time %d.%d\n", childpid, sysClock.secs, sysClock.nano);
       //keeping track of my kinds because i'm running out of resources before it exits
@@ -299,95 +294,81 @@ int main(int argc, char *argv[]) {
       //pull the sucker off, send the message to the waiting proc,
       //and let 'er rip.
       //gonna have to change a whole bunch of code here for that....
-      else if (!isEmpty(rrq)) {
-        //get the simpid and priority to tell proc what to do...
-        int rrqSimPid = dequeue(rrq);
-        //int rrqPriority = initPCB.priority; <- now this is out of scope ;(
-        int rrqPriority = pcbTable[rrqSimPid].priority;
-        //need a better way to send messages.
-        //well damn procs aint gon run if they aint get message!
-        mb.mtype = rrqSimPid+1;
-        //so if we change up priority, timeslice is 2 to priority times wtv our quantum is
-        mb.timeSlice = 10000 * pow(2.0, rrqPriority);
-        //NOW we send got the info to send the message!
-        if (msgsnd(msqid, &mb, sizeof(mb.timeSlice), 0) == -1) {
-          perror("oss: Message failed to send.");
-          exit(1);
-        }
+    else if (!isEmpty(rrq)) {
+      //get the simpid and priority to tell proc what to do...
+      int rrqSimPid = dequeue(rrq);
+      //int rrqPriority = initPCB.priority; <- now this is out of scope ;(
+      int rrqPriority = pcbTable[rrqSimPid].priority;
+      //need a better way to send messages.
+      //well damn procs aint gon run if they aint get message!
+      mb.mtype = rrqSimPid+1;
+      //so if we change up priority, timeslice is 2 to priority times wtv our quantum is
+      mb.timeSlice = 10000 * pow(2.0, rrqPriority);
+      //NOW we send got the info to send the message!
+      if (msgsnd(msqid, &mb, sizeof(mb.timeSlice), 0) == -1) {
+        perror("oss: Message failed to send.");
+        exit(1);
       }
-      else if(!isEmpty(mlfq)) {
-        //get the simpid and priority to tell proc what to do...
-        int mlfqSimPid = dequeue(mlfq);
-        //int rrqPriority = initPCB.priority; <- now this is out of scope ;(
-        int mlfqPriority = pcbTable[mlfqSimPid].priority;
-        //need a better way to send messages.
-        //well damn procs aint gon run if they aint get message!
-        mb.mtype = mlfqSimPid+1;
-        //so if we change up priority, timeslice is 2 to priority times wtv our quantum is
-        mb.timeSlice = 10000 * pow(2.0, mlfqPriority);
-        //NOW we send got the info to send the message!
-        if (msgsnd(msqid, &mb, sizeof(mb.timeSlice), 0) == -1) {
-          perror("oss: Message failed to send.");
-          exit(1);
-        }
-      }
-
-      //ok exit for real now. check for terminated children, then check exit condition!
-      pid_t waitPID;
-      //set up an array of children to count for this, seems like its working with 1 proc
-      //basically fixing the old loop to account for more kids better. and get rid of shm+2.
-      for (i=0; i<proc_count; i++) {
-        if (*(kidPIDs+i)>0) {
-          waitPID = waitpid(*(kidPIDs+i), &status, WNOHANG);
-          //if waitpid shows dead, mark em -1 in array to sho that
-          if (waitPID == *(kidPIDs+1)) {
-            fprintf(outfile, "oss: Child pid %d terminated at system clock time %d.%d\n", *(kidPIDs+i), *(scSM+0), *(scSM+1));
-            *(kidPIDs+i) = -1;
-          }
-          else total++;
-        }
-      }
-
-      if (total == 0 || total > 25) {
-        printf("Lets get out of here!!!");
-
-        break;
-      }
-
-
     }
-    //THIS MESS FOR TOO MANY PROCS. don't think its needed so much.
-    //WAIT YES IT IS NEED A WAY TO CHECK FOR DEAD KIDS
-    //don't want to destroy shm too fast, so we wait for child to finish.
-    // if(proc_count >= maxProc) {
-    //   do {
-    //     if (*(shm+2) != 0) {
-    //       printf("killed %d\n", *(shm+2));
-    //       fprintf(outfile, "oss: Child pid %d terminated at system clock time %d.%d\n", *(shm+2), *(scSM+0), *(scSM+1));
-    //       proc_count--;
-	  //     }
-    //   } while(*(shm+2) == 0);
-    //   *(shm+2) = 0;
-    // }
+    else if(!isEmpty(mlfq)) {
+      //get the simpid and priority to tell proc what to do...
+      int mlfqSimPid = dequeue(mlfq);
+      //int rrqPriority = initPCB.priority; <- now this is out of scope ;(
+      int mlfqPriority = pcbTable[mlfqSimPid].priority;
+      //need a better way to send messages.
+      //well damn procs aint gon run if they aint get message!
+      mb.mtype = mlfqSimPid+1;
+      //so if we change up priority, timeslice is 2 to priority times wtv our quantum is
+      mb.timeSlice = 10000 * pow(2.0, mlfqPriority);
+      //NOW we send got the info to send the message!
+      if (msgsnd(msqid, &mb, sizeof(mb.timeSlice), 0) == -1) {
+        perror("oss: Message failed to send.");
+        exit(1);
+      }
+    }
 
-    //check exit condish <- lol this not good
-    printf("total: %d, time: %d.%d\n", total, *(scSM+0), *(scSM+1));
-    //de-tach and de-stroy shm..
-    printf("And we're back! shm contains %ds and %dns.\n", *(scSM+0), *(scSM+1));
-    //detach shared mem
-    shmdt((void*) scSM);
-    //delete shared mem
-    shmctl(scSMid, IPC_RMID, NULL);
-    //printf("shm has left us for Sto'Vo'Kor\n");
-    if (msgctl(msqid, IPC_RMID, NULL) == -1) {
-         perror("oss: msgctl failed to kill the queue");
-         exit(1);
-     }
+    //ok exit for real now. check for terminated children, then check exit condition!
+    pid_t waitPID;
+    //set up an array of children to count for this, seems like its working with 1 proc
+    //basically fixing the old loop to account for more kids better. and get rid of shm+2.
+    for (i=0; i<proc_count; i++) {
+      if (*(kidPIDs+i)>0) {
+        waitPID = waitpid(*(kidPIDs+i), &status, WNOHANG);
+        //if waitpid shows dead, mark em -1 in array to sho that
+        if (waitPID == *(kidPIDs+1)) {
+          fprintf(outfile, "oss: Child pid %d terminated at system clock time %d.%d\n", *(kidPIDs+i), *(scSM+0), *(scSM+1));
+          *(kidPIDs+i) = -1;
+        }
+        else total++;
+      }
+    }
 
-    printf("fin.\n");
-    return 0;
+    //proc exit conditions
+    if (total == 0 || total > 25) {
+      printf("Lets get out of here!!!");
+      break;
+    }
 
- }
+  }
+
+  //check exit condish <- lol this not good
+  printf("total: %d, time: %d.%d\n", total, *(scSM+0), *(scSM+1));
+  //de-tach and de-stroy shm..
+  printf("And we're back! shm contains %ds and %dns.\n", *(scSM+0), *(scSM+1));
+  //detach shared mem
+  shmdt((void*) scSM);
+  //delete shared mem
+  shmctl(scSMid, IPC_RMID, NULL);
+  //printf("shm has left us for Sto'Vo'Kor\n");
+  if (msgctl(msqid, IPC_RMID, NULL) == -1) {
+       perror("oss: msgctl failed to kill the queue");
+       exit(1);
+   }
+
+  printf("fin.\n");
+  return 0;
+
+}
 
 static void interruptHandler() {
   key_t scSMkey = 1337;
