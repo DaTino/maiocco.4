@@ -47,6 +47,8 @@ typedef struct PCB {
 
 pcbType newPCB(shareClock sysClock, int simPID);
 
+int canMakeProc(int maxProc, int proc_count, int *kidPIDs, shareClock sysClock, shareClock randClock);
+
 int main(int argc, char *argv[]) {
 
   int maxProc = 18;
@@ -203,7 +205,7 @@ int main(int argc, char *argv[]) {
   int simPIDarray[maxProc];
   int availablePID = 0;
   int i = 0;
-  for (i=0,i<maxProc;i++) {
+  for (i=0;i<maxProc;i++) {
     simPIDarray[i]=1; //changed to 1 for open, plays bettr as beul
   }
   int *kidPIDs = malloc(maxProc*sizeof(int));
@@ -227,7 +229,7 @@ int main(int argc, char *argv[]) {
 
     //need to determine when/how to make child- what I had before about total proc
     //check time requirement and proc requirement
-    if (((sysClock.secs*1e9) + sysClock.nano) < ((randClock.secs*1e9)+randClock.nano) || (total < maxProc)) {
+    if (canMakeProc(maxProc, proc_count, sysClock, randClock, simPIDarray)) {
 
       //pcb for child
       pcbType initPCB = newPCB(sysClock, 1); //starting with 1 for the simPID
@@ -398,5 +400,30 @@ pcbType newPCB(shareClock sysClock, int simPID) {
   //I'll add the randorinos later, gator.
 
   return pcb;
+
+}
+
+int canMakeProc(int maxProc, int proc_count, int *simPIDarray, shareClock sysClock, shareClock randClock) {
+  int openPID;
+  int i;
+  for (i=0; i<maxProc; i++) {
+    if simPIDarray[i] == 1) {
+      availablePID = i;
+      break;
+    }
+    else {
+      return 0; //dont make no babbies if yall aint got room!
+    }
+  }
+  //time check...
+  if (((sysClock.secs*1e9) + sysClock.nano) < ((randClock.secs*1e9)+randClock.nano)) {
+    return 0;
+  }
+  //proc check...
+  if (proc_count >= maxProc) {
+    return 0;
+  }
+
+  return 1;
 
 }
