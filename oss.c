@@ -267,7 +267,9 @@ int main(int argc, char *argv[]) {
     else if (!isEmpty(rrq)) {
       //get the simpid and priority to tell proc what to do...
       int rrqSimPid = dequeue(rrq);
-      int rrqPriority = initPCB.priority;
+      //int rrqPriority = initPCB.priority; <- now this is out of scope ;(
+      int rrqPriority = 0;
+
 
       //need a better way to send messages.
       //well damn procs aint gon run if they aint get message!
@@ -283,19 +285,19 @@ int main(int argc, char *argv[]) {
     //THIS MESS FOR TOO MANY PROCS. don't think its needed so much.
     //WAIT YES IT IS NEED A WAY TO CHECK FOR DEAD KIDS
     //don't want to destroy shm too fast, so we wait for child to finish.
-    if(proc_count >= maxProc) {
-      do {
-        if (*(shm+2) != 0) {
-          printf("killed %d\n", *(shm+2));
-          fprintf(outfile, "oss: Child pid %d terminated at system clock time %d.%d\n", *(shm+2), *(scSM+0), *(scSM+1));
-          proc_count--;
-	      }
-      } while(*(shm+2) == 0);
-      *(shm+2) = 0;
-    }
+    // if(proc_count >= maxProc) {
+    //   do {
+    //     if (*(shm+2) != 0) {
+    //       printf("killed %d\n", *(shm+2));
+    //       fprintf(outfile, "oss: Child pid %d terminated at system clock time %d.%d\n", *(shm+2), *(scSM+0), *(scSM+1));
+    //       proc_count--;
+	  //     }
+    //   } while(*(shm+2) == 0);
+    //   *(shm+2) = 0;
+    // }
 
     //check exit condish
-    if (total == 0 || total > 100) break;
+    if (total == 0 || total > 18) break;
 
  }
 
