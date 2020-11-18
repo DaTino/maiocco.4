@@ -278,7 +278,7 @@ int main(int argc, char *argv[]) {
           char *args[4]={"./user", simpidstring, msgidstring, NULL};
           printf("execing %s\n");
           execvp(args[0], args);
-          exit(0);
+          //exit(0);
       }
       printf("oss: Creating new child pid %d at my time %d.%d\n", childpid, sysClock.secs, sysClock.nano);
       //keeping track of my kinds because i'm running out of resources before it exits
