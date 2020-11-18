@@ -230,7 +230,7 @@ int main(int argc, char *argv[]) {
 
     //need to determine when/how to make child- what I had before about total proc
     //check time requirement and proc requirement
-    if (canMakeProc(maxProc, proc_count, sysClock, randClock, simPIDarray)) {
+    if (canMakeProc(maxProc, proc_count, simPIDarray, sysClock, randClock)) {
 
       //pcb for child
       pcbType initPCB = newPCB(sysClock, 1); //starting with 1 for the simPID
@@ -238,7 +238,7 @@ int main(int argc, char *argv[]) {
 
       //find open pid in array
       for (i=0; i<maxProc; i++) {
-        if simPIDarray[i] == 1) {
+        if (simPIDarray[i] == 1) {
           availablePID = i;
           break;
         }
@@ -405,7 +405,7 @@ pcbType newPCB(shareClock sysClock, int simPID) {
 }
 
 bool canMakeProc(int maxProc, int proc_count, int *simPIDarray, shareClock sysClock, shareClock randClock) {
-  int openPID;
+  int availablePID;
   int i;
   for (i=0; i<maxProc; i++) {
     if simPIDarray[i] == 1) {
