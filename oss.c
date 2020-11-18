@@ -195,7 +195,7 @@ int main(int argc, char *argv[]) {
   int proc_count = 0;
   int nsec = 1000000;
   //send the initial message to get everything going
-  if (msgsnd(msqid, &mb, sizeof(mb.timeslice), 0) == -1) {
+  if (msgsnd(msqid, &mb, sizeof(mb.timeSlice), 0) == -1) {
     perror("oss: Message failed to send.");
     exit(1);
   }
