@@ -241,7 +241,7 @@ int main(int argc, char *argv[]) {
           break;
         }
       } //still need a way deal with not being set...
-      simPIDarray[availablePID] = 0
+      simPIDarray[availablePID] = 0;
 
         //pcb for child
       pcbTable[availablePID] = newPCB(sysClock, availablePID);
@@ -250,8 +250,8 @@ int main(int argc, char *argv[]) {
       //so 0 priority goonna go into rrq, and anything higher than that
       //gonna be in mlfq, based on timeslice. implement l8r, sk8r.
       if (pcbTable[availablePID].priority == 0) {
-        printf("Adding %d into RRQ\n", initPCB.simPID);
-        enqueue(rrq, initPCB.simPID);
+        printf("Adding %d into RRQ\n", availablePID);
+        enqueue(rrq, availablePID);
       }
       //kk, so kids's set up, gonna have to fix this fork part to send messages
       //correctly
@@ -280,7 +280,7 @@ int main(int argc, char *argv[]) {
         //   // *(scSM+0)+=nsec/1e9;
         //   // *(scSM+1)-=1e9;
         }
-        printf("oss: Creating new child pid %d at my time %d.%d\n", childpid, total_sec, nsec_part);
+        printf("oss: Creating new child pid %d at my time %d.%d\n", childpid, sysClock.secs, sysClock.nano);
         //keeping track of my kinds because i'm running out of resources before it exits
         *(kidPIDs + proc_count) = childpid;
         proc_count++;
@@ -313,6 +313,7 @@ int main(int argc, char *argv[]) {
 
       //ok exit for real now. check for terminated children, then check exit condition!
       pid_t waitPID;
+      if (total == 0 || total > 18) break;
 
 
     }
@@ -331,27 +332,23 @@ int main(int argc, char *argv[]) {
     // }
 
     //check exit condish <- lol this not good
-    if (total == 0 || total > 18) break;
+    printf("total: %d, time: %d.%d\n", total, *(scSM+0), *(scSM+1));
+    //de-tach and de-stroy shm..
+    printf("And we're back! shm contains %ds and %dns.\n", *(scSM+0), *(scSM+1));
+    //detach shared mem
+    shmdt((void*) scSM);
+    //delete shared mem
+    shmctl(scSMid, IPC_RMID, NULL);
+    //printf("shm has left us for Sto'Vo'Kor\n");
+    if (msgctl(msqid, IPC_RMID, NULL) == -1) {
+         perror("oss: msgctl failed to kill the queue");
+         exit(1);
+     }
+
+    printf("fin.\n");
+    return 0;
 
  }
-
-
-  printf("total: %d, time: %d.%d\n", total, *(scSM+0), *(scSM+1));
-  //de-tach and de-stroy shm..
-  printf("And we're back! shm contains %ds and %dns.\n", *(scSM+0), *(scSM+1));
-  //detach shared mem
-  shmdt((void*) scSM);
-  //delete shared mem
-  shmctl(scSMid, IPC_RMID, NULL);
-  //printf("shm has left us for Sto'Vo'Kor\n");
-  if (msgctl(msqid, IPC_RMID, NULL) == -1) {
-       perror("oss: msgctl failed to kill the queue");
-       exit(1);
-   }
-
-  printf("fin.\n");
-  return 0;
-}
 
 static void interruptHandler() {
   key_t scSMkey = 1337;
