@@ -70,12 +70,12 @@ int main(int argc, char *argv[]){
   //message queue mess down here
   struct msgBuffer mb;
   key_t msgKey = 612;
-  if ((msqid = msgget(msgKey, 0666 | IPC_CREAT)) == -1) {
+  if ((msqid = msgget(msgKey, 0666 | IPC_CREAT)) < 0) {
     perror("user: error creating message queue.");
     exit(1);
   }
-  if (msgrcv(msqid, &mb, sizeof(mb.timeSlice), (simPID+1), 0) <= -1) {
-    perror("user: Message failed to send.");
+  if (msgrcv(msqid, &mb, sizeof(mb.timeSlice), (simPID+1), 0) < -1) {
+    perror("user: Message failed to get.");
     exit(1);
   }
 
