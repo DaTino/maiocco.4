@@ -247,7 +247,7 @@ int main(int argc, char *argv[]) {
 
       //need a better way to send messages.
       //well damn procs aint gon run if they aint get message!
-      mb.mType = rrqSimPid;
+      mb.mtype = rrqSimPid;
       //so if we change up priority, timeslice is 2 to priority times wtv our quantum is
       mb.timeSlice = 10000 * pow(2.0, rrqPriority);
       //NOW we send got the info to send the message!
