@@ -186,6 +186,7 @@ int main(int argc, char *argv[]) {
 
   //set up our basic round robin queue for 1 pcb, and go from there...
   queueType *rrq = createQueue(maxProc);
+  queueType *mlfq = createQueue(maxProc);
 
   int maxTimeBetweenNewProcsNS = 5*1e9;
   int maxTimeBetweenNewProcsSecs = 1;
@@ -313,7 +314,25 @@ int main(int argc, char *argv[]) {
 
       //ok exit for real now. check for terminated children, then check exit condition!
       pid_t waitPID;
-      if (total == 0 || total > 18) break;
+      //set up an array of children to count for this, seems like its working with 1 proc
+      //basically fixing the old loop to account for more kids better. and get rid of shm+2.
+      for (i=0; i<proc_count; i++) {
+        if (*(kidPIDs+i)>0) {
+          waitPID = waitpid(*(kidPIDs+i), &status, WNOHANG);
+          //if waitpid shows dead, mark em -1 in array to sho that
+          if (waitPID == *(kidPIDs+1)) {
+            fprintf(outfile, "oss: Child pid %d terminated at system clock time %d.%d\n", *(kidPIDs+i), *(scSM+0), *(scSM+1));
+            *(array+i) = -1;
+          }
+          else total++;
+        }
+      }
+
+      if (total == 0 || total > 25) {
+        printf("Lets get out of here!!!");
+
+        break;
+      }
 
 
     }
