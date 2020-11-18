@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
   }
   //set user's time based on vals in shared mem, doing this to do time rounding mess
   userSecs = *(shm+0);
-  userNano = (*shm+1);
+  userNano = *(shm+1);
   //update based on rounding
   if (userNano > 1e9) {
     userSecs += userNano/1e9;

@@ -195,52 +195,76 @@ int main(int argc, char *argv[]) {
   int proc_count = 0;
   int nsec = 1000000;
 
+  unsigned int sysSecs;
+  unsigned int sysNano;
+
   int cpuWorkTimeConstant = 10000;
   //main looperino right here!
-  while (total < 100 && (*scSM).secs < maxSecs) {
+  //while (total < 100 && (*scSM).secs < maxSecs) {
+  while (1) {
 
-    pcbType initPCB = newPCB(sysClock, 1); //starting with 1 for the simPID
-    printf("yo dog PCB wif simPID %d and priority %d\n", initPCB.simPID, initPCB.priority);
-
-    //so 0 priority goonna go into rrq, and anything higher than that
-    //gonna be in mlfq, based on timeslice. implement l8r, sk8r.
-    if (initPCB.priority == 0) {
-      printf("Adding %d into RRQ\n", initPCB.simPID);
-      enqueue(rrq, initPCB.simPID);
+    //set the current time/share time after every looperino
+    sysSecs = (*scSM).secs; //sec
+    sysNano = (*scSM).nano; //nsec
+    if (sysNano > 1e9) {
+      sysSecs += sysNano/1e9;
+      sysNano -= 1e9;
     }
-    //kk, so kids's set up, gonna have to fix this fork part to send messages
-    //correctly
-    if((childpid = fork()) < 0) {
-      perror("./oss: ...it was a stillbirth.");
-      if (msgctl(msqid, IPC_RMID, NULL) == -1) {
-           perror("oss: msgctl failed to kill the queue");
-           exit(1);
-       }
-       shmctl(scSMid, IPC_RMID, NULL);
-      exit(1);
-    } else if (childpid == 0) {
-      (*scSM).nano += nsec;
-      //*(scSM+1) += nsec;
-      if (nsec > 1e9) {
-        (*scSM).secs += nsec/1e9;
-        (*scSM).nano -= 1e9;
-        // *(scSM+0)+=nsec/1e9;
-        // *(scSM+1)-=1e9;
+    (*scSM).secs = sysSecs; //sec
+    (*scSM).nano = sysNano; //nsec
+    sysClock.secs = sysSecs;
+    sysClock.nano = sysNano;
+
+    //need to determine when/how to make child- what I had before about total proc
+    //check time requirement and proc requirement
+    if (((sysClock.secs*1e9) + sysClock.nano) < ((randClock.secs*1e9)+randClock.nano) || (total < maxProc)) {
+
+      //pcb for child
+      pcbType initPCB = newPCB(sysClock, 1); //starting with 1 for the simPID
+      printf("yo dog PCB wif simPID %d and priority %d\n", initPCB.simPID, initPCB.priority);
+
+      //so 0 priority goonna go into rrq, and anything higher than that
+      //gonna be in mlfq, based on timeslice. implement l8r, sk8r.
+      if (initPCB.priority == 0) {
+        printf("Adding %d into RRQ\n", initPCB.simPID);
+        enqueue(rrq, initPCB.simPID);
       }
-      //printf("oss: Creating new child pid %d at my time %d.%d\n", getpid(), total_sec, nsec_part);
-      fprintf(outfile,"oss: Creating new child pid %d at my time %d.%d\n", getpid(), *(scSM+0), *(scSM+1));
-      char *args[]={"./user", NULL};
-      execvp(args[0], args);
-    } else {
-      total++;
-      proc_count++;
+      //kk, so kids's set up, gonna have to fix this fork part to send messages
+      //correctly
+      if((childpid = fork()) < 0) {
+        perror("./oss: ...it was a stillbirth.");
+        if (msgctl(msqid, IPC_RMID, NULL) == -1) {
+             perror("oss: msgctl failed to kill the queue");
+             exit(1);
+         }
+         shmctl(scSMid, IPC_RMID, NULL);
+        exit(1);
+      } else if (childpid == 0) {
+        (*scSM).nano += nsec;
+        //*(scSM+1) += nsec;
+        if (nsec > 1e9) {
+          (*scSM).secs += nsec/1e9;
+          (*scSM).nano -= 1e9;
+          // *(scSM+0)+=nsec/1e9;
+          // *(scSM+1)-=1e9;
+        }
+        //printf("oss: Creating new child pid %d at my time %d.%d\n", getpid(), total_sec, nsec_part);
+        fprintf(outfile,"oss: Creating new child pid %d at my time %d.%d\n", getpid(), *(scSM+0), *(scSM+1));
+        char simpidstring[16], msgidstring[16];
+        sprintf(simpidstring, "%d", initPCB.simPID);
+        sprintf(msgidstring, "%d", msqid);
+        char *args[]={"./user", simpidstring, msgidstring, NULL};
+        execvp(args[0], args);
+      } else {
+        total++;
+        proc_count++;
+      }
     }
-
     //ok so what.... check the queue. Since this is the last queue, we
     //pull the sucker off, send the message to the waiting proc,
     //and let 'er rip.
     //gonna have to change a whole bunch of code here for that....
-    if (!isEmpty(rrq)) {
+    else if (!isEmpty(rrq)) {
       //get the simpid and priority to tell proc what to do...
       int rrqSimPid = dequeue(rrq);
       int rrqPriority = initPCB.priority;
@@ -257,17 +281,22 @@ int main(int argc, char *argv[]) {
       }
     }
     //THIS MESS FOR TOO MANY PROCS. don't think its needed so much.
+    //WAIT YES IT IS NEED A WAY TO CHECK FOR DEAD KIDS
     //don't want to destroy shm too fast, so we wait for child to finish.
-    // if(proc_count >= maxProc) {
-    //   do {
-    //     if (*(shm+2) != 0) {
-    //       printf("killed %d\n", *(shm+2));
-    //       fprintf(outfile, "oss: Child pid %d terminated at system clock time %d.%d\n", *(shm+2), *(scSM+0), *(scSM+1));
-    //       proc_count--;
-	  //     }
-    //   } while(*(shm+2) == 0);
-    //   *(shm+2) = 0;
-    // }
+    if(proc_count >= maxProc) {
+      do {
+        if (*(shm+2) != 0) {
+          printf("killed %d\n", *(shm+2));
+          fprintf(outfile, "oss: Child pid %d terminated at system clock time %d.%d\n", *(shm+2), *(scSM+0), *(scSM+1));
+          proc_count--;
+	      }
+      } while(*(shm+2) == 0);
+      *(shm+2) = 0;
+    }
+
+    //check exit condish
+    if (total == 0 || total > 100) break;
+
  }
 
 
