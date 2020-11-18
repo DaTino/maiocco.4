@@ -254,6 +254,10 @@ int main(int argc, char *argv[]) {
         printf("Adding %d into RRQ\n", availablePID);
         enqueue(rrq, availablePID);
       }
+      else if (pcbTable[availablePID].priority == 1) {
+        printf("Adding %d into MLFQ\n", availablePID);
+        enqueue(mlfq, availablePID);
+      }
       //kk, so kids's set up, gonna have to fix this fork part to send messages
       //correctly
       if((childpid = fork()) < 0) {
@@ -264,33 +268,33 @@ int main(int argc, char *argv[]) {
          }
          shmctl(scSMid, IPC_RMID, NULL);
         exit(1);
-      } else if (childpid == 0) {
-
-        fprintf(outfile,"oss: Creating new child pid %d at my time %d.%d\n", getpid(), *(scSM+0), *(scSM+1));
-        char simpidstring[16], msgidstring[16];
-        sprintf(simpidstring, "%d", availablePID);
-        sprintf(msgidstring, "%d", msqid);
-        char *args[]={"./user", simpidstring, msgidstring, NULL};
-        execvp(args[0], args);
-        exit(0);
-        // (*scSM).nano += nsec;
-        // //*(scSM+1) += nsec;
-        // if (nsec > 1e9) {
-        //   (*scSM).secs += nsec/1e9;
-        //   (*scSM).nano -= 1e9;
-        //   // *(scSM+0)+=nsec/1e9;
-        //   // *(scSM+1)-=1e9;
-        }
-        printf("oss: Creating new child pid %d at my time %d.%d\n", childpid, sysClock.secs, sysClock.nano);
-        //keeping track of my kinds because i'm running out of resources before it exits
-        *(kidPIDs + proc_count) = childpid;
-        proc_count++;
-        //update timer w/random vals
-        srand(time(0));
-        randClock.secs = (rand() % maxTimeBetweenNewProcsSecs + 1) + sysClock.secs;
-        randClock.nano = (rand() % maxTimeBetweenNewProcsNS + 1) + sysClock.nano;
-
       }
+      else if (childpid == 0) {
+          fprintf(outfile,"oss: Creating new child pid %d at my time %d.%d\n", getpid(), *(scSM+0), *(scSM+1));
+          char simpidstring[16], msgidstring[16];
+          sprintf(simpidstring, "%d", availablePID);
+          sprintf(msgidstring, "%d", msqid);
+          char *args[]={"./user", simpidstring, msgidstring, NULL};
+          execvp(args[0], args);
+          exit(0);
+          // (*scSM).nano += nsec;
+          // //*(scSM+1) += nsec;
+          // if (nsec > 1e9) {
+          //   (*scSM).secs += nsec/1e9;
+          //   (*scSM).nano -= 1e9;
+          //   // *(scSM+0)+=nsec/1e9;
+          //   // *(scSM+1)-=1e9;
+      }
+      printf("oss: Creating new child pid %d at my time %d.%d\n", childpid, sysClock.secs, sysClock.nano);
+      //keeping track of my kinds because i'm running out of resources before it exits
+      *(kidPIDs + proc_count) = childpid;
+      proc_count++;
+      //update timer w/random vals
+      srand(time(0));
+      randClock.secs = (rand() % maxTimeBetweenNewProcsSecs + 1) + sysClock.secs;
+      randClock.nano = (rand() % maxTimeBetweenNewProcsNS + 1) + sysClock.nano;
+
+    }
       //ok so what.... check the queue. Since this is the last queue, we
       //pull the sucker off, send the message to the waiting proc,
       //and let 'er rip.
@@ -299,7 +303,7 @@ int main(int argc, char *argv[]) {
         //get the simpid and priority to tell proc what to do...
         int rrqSimPid = dequeue(rrq);
         //int rrqPriority = initPCB.priority; <- now this is out of scope ;(
-        int rrqPriority = 0;
+        int rrqPriority = pcbTable[rrqSimPid].priority;
         //need a better way to send messages.
         //well damn procs aint gon run if they aint get message!
         mb.mtype = rrqSimPid+1;
@@ -315,7 +319,7 @@ int main(int argc, char *argv[]) {
         //get the simpid and priority to tell proc what to do...
         int mlfqSimPid = dequeue(mlfq);
         //int rrqPriority = initPCB.priority; <- now this is out of scope ;(
-        int mlfqPriority = 0;
+        int mlfqPriority = pcbTable[mlfqSimPid].priority;
         //need a better way to send messages.
         //well damn procs aint gon run if they aint get message!
         mb.mtype = mlfqSimPid+1;
