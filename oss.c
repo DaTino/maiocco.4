@@ -23,7 +23,8 @@ FILE* outfile;
 
 typedef struct msgBuffer {
   long mtype;
-  char msgData[32];
+  //char msgData[32]; //<- this needs to change to time slice
+  int timeSlice;
 }message;
 
 static void interruptHandler();
@@ -162,7 +163,8 @@ int main(int argc, char *argv[]) {
   //create message queue
   message mb;
   mb.mtype = 1;
-  strcpy(mb.msgData, "Please work...");
+  //strcpy(mb.msgData, "Please work..."); //<- lol, print this mess out everywhere
+  mb.timeSlice = 1000; //for now, this will get set later
   int msqid;
   key_t msgKey = 612;
   if ((msqid = msgget(msgKey, 0666 | IPC_CREAT)) == -1) {
@@ -205,7 +207,14 @@ int main(int argc, char *argv[]) {
     pcbType initPCB = newPCB(sysClock, 1); //starting with 1 for the simPID
     printf("yo dog PCB wif simPID %d and priority %d\n", initPCB.simPID, initPCB.priority);
 
-
+    //so 0 priority goonna go into rrq, and anything higher than that
+    //gonna be in mlfq, based on timeslice. implement l8r, sk8r.
+    if (initPCB.priority == 0) {
+      printf("Adding %d into RRQ\n", initPCB.simPID);
+      enqueue(rrq, initPCB.simPID);
+    }
+    //kk, so kids's set up, gonna have to fix this fork part to send messages
+    //correctly
     if((childpid = fork()) < 0) {
       perror("./oss: ...it was a stillbirth.");
       if (msgctl(msqid, IPC_RMID, NULL) == -1) {
@@ -232,6 +241,18 @@ int main(int argc, char *argv[]) {
       proc_count++;
     }
 
+    //ok so what.... check the queue. Since this is the last queue, we
+    //pull the sucker off, send the message to the waiting proc,
+    //and let 'er rip.
+    //gonna have to change a whole bunch of code here for that....
+    if (!isEmpty(rrq)) {
+      //get the simpid and priority to tell proc what to do...
+      int rrqSimPid = dequeue(rrq);
+      int rrqPriority = initPCB.priority;
+
+      //need a better way to send messages.
+
+    }
     //THIS MESS FOR TOO MANY PROCS. don't think its needed so much.
     //don't want to destroy shm too fast, so we wait for child to finish.
     // if(proc_count >= maxProc) {
@@ -323,7 +344,6 @@ pcbType newPCB(shareClock sysClock, int simPID) {
   pcb.simPID = simPID;
 
   //start by simulating real time class, highest priority
-  //dummy this is lowest priority lol. start him off in rrq
   pcb.priority = 0;
   //I'll add the randorinos later, gator.
 
