@@ -322,7 +322,7 @@ int main(int argc, char *argv[]) {
           //if waitpid shows dead, mark em -1 in array to sho that
           if (waitPID == *(kidPIDs+1)) {
             fprintf(outfile, "oss: Child pid %d terminated at system clock time %d.%d\n", *(kidPIDs+i), *(scSM+0), *(scSM+1));
-            *(array+i) = -1;
+            *(kidPIDs+i) = -1;
           }
           else total++;
         }
