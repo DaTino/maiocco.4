@@ -51,16 +51,16 @@ int main(int argc, char *argv[]){
     exit(1);
   }
   //set user's time based on vals in shared mem, doing this to do time rounding mess
-  userSecs = (*shm).secs;
-  userNano = (*shm).nano;
+  userSecs = *(shm+0);
+  userNano = (*shm+1);
   //update based on rounding
   if (userNano > 1e9) {
-    userSecs += nsec/1e9;
+    userSecs += userNano/1e9;
     userNano -= 1e9;
   }
   //update and post back for oss clock, then we use user clock to show user time
-  (*shm).secs = userSecs;
-  (*shm).nano = userNano;
+  (*shm+0) = userSecs;
+  (*shm+1) = userNano;
 
   //user clock update
   userClock.secs = userSecs;
@@ -69,13 +69,12 @@ int main(int argc, char *argv[]){
   //so everything is set to grab the message
   //message queue mess down here
   struct msgBuffer mb;
-  int msqid;
   key_t msgKey = 612;
   if ((msqid = msgget(msgKey, 0666 | IPC_CREAT)) == -1) {
     perror("user: error creating message queue.");
     exit(1);
   }
-  if (msgrcv(msqid), &mb, sizeof(mb.timeSlice), (simPID+1), 0) <= -1) {
+  if (msgrcv(msqid, &mb, sizeof(mb.timeSlice), (simPID+1), 0) <= -1) {
     perror("user: Message failed to send.");
     exit(1);
   }
