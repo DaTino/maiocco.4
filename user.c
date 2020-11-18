@@ -16,7 +16,7 @@ typedef struct shareClock{
 }shareClock;
 
 int main(int argc, char *argv[]){
-
+  printf("hey, user here\n");
   //ok, lets redo this mess-
   //we're gonna get the time slice from the message,
   //we're gonna update the clock in shared mem

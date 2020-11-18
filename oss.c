@@ -302,9 +302,25 @@ int main(int argc, char *argv[]) {
         int rrqPriority = 0;
         //need a better way to send messages.
         //well damn procs aint gon run if they aint get message!
-        mb.mtype = rrqSimPid;
+        mb.mtype = rrqSimPid+1;
         //so if we change up priority, timeslice is 2 to priority times wtv our quantum is
         mb.timeSlice = 10000 * pow(2.0, rrqPriority);
+        //NOW we send got the info to send the message!
+        if (msgsnd(msqid, &mb, sizeof(mb.timeSlice), 0) == -1) {
+          perror("oss: Message failed to send.");
+          exit(1);
+        }
+      }
+      else if(!isEmpty(mlfq)) {
+        //get the simpid and priority to tell proc what to do...
+        int mlfqSimPid = dequeue(mlfq);
+        //int rrqPriority = initPCB.priority; <- now this is out of scope ;(
+        int mlfqPriority = 0;
+        //need a better way to send messages.
+        //well damn procs aint gon run if they aint get message!
+        mb.mtype = mlfqSimPid+1;
+        //so if we change up priority, timeslice is 2 to priority times wtv our quantum is
+        mb.timeSlice = 10000 * pow(2.0, mlfqPriority);
         //NOW we send got the info to send the message!
         if (msgsnd(msqid, &mb, sizeof(mb.timeSlice), 0) == -1) {
           perror("oss: Message failed to send.");
