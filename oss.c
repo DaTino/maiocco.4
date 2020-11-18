@@ -13,6 +13,7 @@ CS4760 Project 4
 #include <sys/msg.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <stdbool.h>
 #include <time.h>
 #include <math.h>
 #include <string.h>
@@ -47,7 +48,7 @@ typedef struct PCB {
 
 pcbType newPCB(shareClock sysClock, int simPID);
 
-int canMakeProc(int maxProc, int proc_count, int *kidPIDs, shareClock sysClock, shareClock randClock);
+bool canMakeProc(int maxProc, int proc_count, int *simPIDarray, shareClock sysClock, shareClock randClock);
 
 int main(int argc, char *argv[]) {
 
@@ -403,7 +404,7 @@ pcbType newPCB(shareClock sysClock, int simPID) {
 
 }
 
-int canMakeProc(int maxProc, int proc_count, int *simPIDarray, shareClock sysClock, shareClock randClock) {
+bool canMakeProc(int maxProc, int proc_count, int *simPIDarray, shareClock sysClock, shareClock randClock) {
   int openPID;
   int i;
   for (i=0; i<maxProc; i++) {
@@ -412,18 +413,18 @@ int canMakeProc(int maxProc, int proc_count, int *simPIDarray, shareClock sysClo
       break;
     }
     else {
-      return 0; //dont make no babbies if yall aint got room!
+      return false; //dont make no babbies if yall aint got room!
     }
   }
   //time check...
   if (((sysClock.secs*1e9) + sysClock.nano) < ((randClock.secs*1e9)+randClock.nano)) {
-    return 0;
+    return false;
   }
   //proc check...
   if (proc_count >= maxProc) {
-    return 0;
+    return false;
   }
 
-  return 1;
+  return true;
 
 }
