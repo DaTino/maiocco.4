@@ -194,11 +194,6 @@ int main(int argc, char *argv[]) {
   int total = 0;
   int proc_count = 0;
   int nsec = 1000000;
-  //send the initial message to get everything going
-  if (msgsnd(msqid, &mb, sizeof(mb.timeSlice), 0) == -1) {
-    perror("oss: Message failed to send.");
-    exit(1);
-  }
 
   int cpuWorkTimeConstant = 10000;
   //main looperino right here!
@@ -251,7 +246,15 @@ int main(int argc, char *argv[]) {
       int rrqPriority = initPCB.priority;
 
       //need a better way to send messages.
-
+      //well damn procs aint gon run if they aint get message!
+      mb.mType = rrqSimPid;
+      //so if we change up priority, timeslice is 2 to priority times wtv our quantum is
+      mb.timeSlice = 10000 * pow(2.0, rrqPriority);
+      //NOW we send got the info to send the message!
+      if (msgsnd(msqid, &mb, sizeof(mb.timeSlice), 0) == -1) {
+        perror("oss: Message failed to send.");
+        exit(1);
+      }
     }
     //THIS MESS FOR TOO MANY PROCS. don't think its needed so much.
     //don't want to destroy shm too fast, so we wait for child to finish.
