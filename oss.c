@@ -267,7 +267,7 @@ int main(int argc, char *argv[]) {
 
         fprintf(outfile,"oss: Creating new child pid %d at my time %d.%d\n", getpid(), *(scSM+0), *(scSM+1));
         char simpidstring[16], msgidstring[16];
-        sprintf(simpidstring, "%d", initPCB.simPID);
+        sprintf(simpidstring, "%d", availablePID);
         sprintf(msgidstring, "%d", msqid);
         char *args[]={"./user", simpidstring, msgidstring, NULL};
         execvp(args[0], args);
