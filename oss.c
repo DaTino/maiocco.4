@@ -209,7 +209,9 @@ int main(int argc, char *argv[]) {
   int i = 0;
   for (i=0;i<maxProc;i++) {
     simPIDarray[i]=1; //changed to 1 for open, plays bettr as beul
+    printf("simPIDarray[%d] = %d, ", i, simPIDarray[i]);
   }
+
   int *kidPIDs = malloc(maxProc*sizeof(int));
 
   int cpuWorkTimeConstant = 10000;
