@@ -227,6 +227,7 @@ int main(int argc, char *argv[]) {
       sysSecs += sysNano/1e9;
       sysNano -= 1e9;
     }
+
     (*scSM).secs = sysSecs; //sec
     (*scSM).nano = sysNano; //nsec
     sysClock.secs = sysSecs;
@@ -275,7 +276,7 @@ int main(int argc, char *argv[]) {
          shmctl(scSMid, IPC_RMID, NULL);
         exit(1);
       }
-      else if (childpid == 0) {
+      else if (getpid() == 0) {
           fprintf(outfile,"oss: Creating new child pid %d at my time %d.%d\n", getpid(), *(scSM+0), *(scSM+1));
           char simpidstring[16], msgidstring[16];
           sprintf(simpidstring, "%d", availablePID);
