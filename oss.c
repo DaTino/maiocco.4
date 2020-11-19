@@ -222,7 +222,7 @@ int main(int argc, char *argv[]) {
     printf("Entering while loop\n");
     //set the current time/share time after every looperino
     sysSecs = (*scSM).secs; //sec
-    sysNano = (*scSM).nano; //nsec
+    sysNano = (*scSM).nano+cpuWorkTimeConstant; //nsec
     if (sysNano > 1e9) {
       sysSecs += sysNano/1e9;
       sysNano -= 1e9;
@@ -332,6 +332,9 @@ int main(int argc, char *argv[]) {
       if (msgsnd(msqid, &mb, sizeof(mb.timeSlice), 0) == -1) {
         perror("oss: Message failed to send.");
         exit(1);
+      }
+      else {
+        printf("**message sent w/ mtype %d and timeslice %d\n", mb.mtype, mb.timeSlice);
       }
     }
 
