@@ -336,11 +336,17 @@ int main(int argc, char *argv[]) {
     pid_t waitPID;
     //set up an array of children to count for this, seems like its working with 1 proc
     //basically fixing the old loop to account for more kids better. and get rid of shm+2.
+    printf("pids in array: ")
+    for (i=0; i<proc_count; i++) {
+      printf("%d |", *(kidPIDs+i));
+    }
+    printf("\n");
+
     for (i=0; i<proc_count; i++) {
       if (*(kidPIDs+i)>0) {
         waitPID = waitpid(*(kidPIDs+i), &status, WNOHANG);
         //if waitpid shows dead, mark em -1 in array to sho that
-        if (waitPID == *(kidPIDs+1)) {
+        if (waitPID == *(kidPIDs+i)) {
           fprintf(outfile, "oss: Child pid %d terminated at system clock time %d.%d\n", *(kidPIDs+i), *(scSM+0), *(scSM+1));
           *(kidPIDs+i) = -1;
         }
