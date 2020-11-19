@@ -215,7 +215,8 @@ int main(int argc, char *argv[]) {
   int cpuWorkTimeConstant = 10000;
   //main looperino right here!
   //while (total < 100 && (*scSM).secs < maxSecs) {
-  while (1) {
+  int count = 0;
+  while (count < 20) {
     printf("Entering while loop\n");
     //set the current time/share time after every looperino
     sysSecs = (*scSM).secs; //sec
@@ -360,6 +361,8 @@ int main(int argc, char *argv[]) {
       printf("Lets get out of here!!!");
       break;
     }
+
+    count++;
 
   }
 
