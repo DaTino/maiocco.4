@@ -349,7 +349,7 @@ int main(int argc, char *argv[]) {
     }
 
     //proc exit conditions
-    if (total == 0 || total > 25) {
+    if (total == 0 || proc_count > 25) {
       printf("Lets get out of here!!!");
       break;
     }
