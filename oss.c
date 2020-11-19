@@ -284,6 +284,7 @@ int main(int argc, char *argv[]) {
       //keeping track of my kinds because i'm running out of resources before it exits
       *(kidPIDs + proc_count) = childpid;
       proc_count++;
+      printf("proc_count: %d", proc_count);
       //update timer w/random vals
       srand(time(0));
       randClock.secs = (rand() % maxTimeBetweenNewProcsSecs + 1) + sysClock.secs;
