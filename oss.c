@@ -295,6 +295,7 @@ int main(int argc, char *argv[]) {
       //and let 'er rip.
       //gonna have to change a whole bunch of code here for that....
     else if (!isEmpty(rrq)) {
+      printf("**in rrq mess\n");
       //get the simpid and priority to tell proc what to do...
       int rrqSimPid = dequeue(rrq);
       //int rrqPriority = initPCB.priority; <- now this is out of scope ;(
@@ -311,6 +312,7 @@ int main(int argc, char *argv[]) {
       }
     }
     else if(!isEmpty(mlfq)) {
+      printf("**in mlfq mess\n");
       //get the simpid and priority to tell proc what to do...
       int mlfqSimPid = dequeue(mlfq);
       //int rrqPriority = initPCB.priority; <- now this is out of scope ;(
