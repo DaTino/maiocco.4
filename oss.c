@@ -355,6 +355,7 @@ int main(int argc, char *argv[]) {
     }
 
     //proc exit conditions
+    printf("Checking exit: total: %d | proc_count %d\n", total, proc_count);
     if (total == 0 || proc_count > 25) {
       printf("Lets get out of here!!!");
       break;
@@ -368,8 +369,10 @@ int main(int argc, char *argv[]) {
   printf("And we're back! shm contains %ds and %dns.\n", *(scSM+0), *(scSM+1));
   //detach shared mem
   shmdt((void*) scSM);
+  shmdt((void*) pcbSM);
   //delete shared mem
   shmctl(scSMid, IPC_RMID, NULL);
+  shmctl(pcbSMid, IPC_RMID, NULL);
   //printf("shm has left us for Sto'Vo'Kor\n");
   if (msgctl(msqid, IPC_RMID, NULL) == -1) {
        perror("oss: msgctl failed to kill the queue");
@@ -460,15 +463,18 @@ bool canMakeProc(int maxProc, int proc_count, int *simPIDarray, shareClock sysCl
       break;
     }
     else {
+      printf("can't make proc because no available pid!\n");
       return false; //dont make no babbies if yall aint got room!
     }
   }
   //time check...
   if (((sysClock.secs*1e9) + sysClock.nano) < ((randClock.secs*1e9)+randClock.nano)) {
+    printf("can't make proc because times all wrong!\n");
     return false;
   }
   //proc check...
   if (proc_count >= maxProc) {
+    printf("can't make proc because too many proc!\n");
     return false;
   }
 
