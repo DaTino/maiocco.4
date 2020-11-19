@@ -216,7 +216,7 @@ int main(int argc, char *argv[]) {
   //main looperino right here!
   //while (total < 100 && (*scSM).secs < maxSecs) {
   while (1) {
-
+    printf("Entering while loop\n");
     //set the current time/share time after every looperino
     sysSecs = (*scSM).secs; //sec
     sysNano = (*scSM).nano; //nsec
@@ -229,10 +229,11 @@ int main(int argc, char *argv[]) {
     sysClock.secs = sysSecs;
     sysClock.nano = sysNano;
 
+    printf("scSM: %d.%d | sysClock: %d.%d\n", (*scSM).secs, (*scSM).nano, sysClock.secs, sysClock.nano);
     //need to determine when/how to make child- what I had before about total proc
     //check time requirement and proc requirement
     if (canMakeProc(maxProc, proc_count, simPIDarray, sysClock, randClock)) {
-      printf("**can make proc!\n");
+      printf("Can make proc!\n");
       // pcbType initPCB = newPCB(sysClock, 1); //starting with 1 for the simPID
       // printf("yo dog PCB wif simPID %d and priority %d\n", initPCB.simPID, initPCB.priority);
 
@@ -244,6 +245,7 @@ int main(int argc, char *argv[]) {
         }
       } //still need a way deal with not being set...
       simPIDarray[availablePID] = 0;
+      printf("using simPIDarray[ %d ]\n", availablePID);
 
         //pcb for child
       pcbTable[availablePID] = newPCB(sysClock, availablePID);
@@ -278,13 +280,13 @@ int main(int argc, char *argv[]) {
           char *args[4]={"./user", simpidstring, msgidstring, NULL};
           printf("execing %s\n");
           execvp(args[0], args);
-          //exit(0);
+          exit(0);
       }
       printf("oss: Creating new child pid %d at my time %d.%d\n", childpid, sysClock.secs, sysClock.nano);
       //keeping track of my kinds because i'm running out of resources before it exits
       *(kidPIDs + proc_count) = childpid;
       proc_count++;
-      printf("proc_count: %d", proc_count);
+      printf("proc_count: %d\n", proc_count);
       //update timer w/random vals
       srand(time(0));
       randClock.secs = (rand() % maxTimeBetweenNewProcsSecs + 1) + sysClock.secs;
@@ -432,8 +434,12 @@ pcbType newPCB(shareClock sysClock, int simPID) {
   pcb.simPID = simPID;
 
   //start by simulating real time class, highest priority
-  pcb.priority = 0;
+  weightPriority = rand() 100 + 1;
   //I'll add the randorinos later, gator.
+  if (weightPriority < 20) {
+    pcb.priority = 0;
+  }
+  else pcb.priority = 1;
 
   return pcb;
 
