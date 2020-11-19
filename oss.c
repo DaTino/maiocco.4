@@ -460,17 +460,17 @@ pcbType newPCB(shareClock sysClock, int simPID) {
 }
 
 bool canMakeProc(int maxProc, int proc_count, int *simPIDarray, shareClock sysClock, shareClock randClock) {
-  int availablePID;
+  int availablePID = -1;
   int i;
   for (i=0; i<maxProc; i++) {
     if (simPIDarray[i] == 1) {
       availablePID = i;
       break;
     }
-    else {
-      printf("can't make proc because no available pid!\n");
-      return false; //dont make no babbies if yall aint got room!
-    }
+  }
+  if (availablePID = -1) {
+    printf("can't make proc because no available pid!\n");
+    return false; //dont make no babbies if yall aint got room!
   }
   //time check...
   if (((sysClock.secs*1e9) + sysClock.nano) < ((randClock.secs*1e9)+randClock.nano)) {
