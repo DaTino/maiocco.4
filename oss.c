@@ -473,10 +473,10 @@ bool canMakeProc(int maxProc, int proc_count, int *simPIDarray, shareClock sysCl
     return false; //dont make no babbies if yall aint got room!
   }
   //time check...
-  if (((sysClock.secs*1e9) + sysClock.nano) < ((randClock.secs*1e9)+randClock.nano)) {
-    printf("can't make proc because times all wrong!\n");
-    return false;
-  }
+  // if (((sysClock.secs*1e9) + sysClock.nano) < ((randClock.secs*1e9)+randClock.nano)) {
+  //   printf("can't make proc because times all wrong!\n");
+  //   return false;
+  // }
   //proc check...
   if (proc_count >= maxProc) {
     printf("can't make proc because too many proc!\n");
