@@ -336,7 +336,7 @@ int main(int argc, char *argv[]) {
     pid_t waitPID;
     //set up an array of children to count for this, seems like its working with 1 proc
     //basically fixing the old loop to account for more kids better. and get rid of shm+2.
-    printf("pids in array: ")
+    printf("pids in array: ");
     for (i=0; i<proc_count; i++) {
       printf("%d |", *(kidPIDs+i));
     }
