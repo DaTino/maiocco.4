@@ -434,7 +434,7 @@ pcbType newPCB(shareClock sysClock, int simPID) {
   pcb.simPID = simPID;
 
   //start by simulating real time class, highest priority
-  weightPriority = rand() % 100 + 1;
+  int weightPriority = rand() % 100 + 1;
   //I'll add the randorinos later, gator.
   if (weightPriority < 20) {
     pcb.priority = 0;
