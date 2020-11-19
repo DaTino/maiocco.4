@@ -468,7 +468,7 @@ bool canMakeProc(int maxProc, int proc_count, int *simPIDarray, shareClock sysCl
       break;
     }
   }
-  if (availablePID = -1) {
+  if (availablePID == -1) {
     printf("can't make proc because no available pid!\n");
     return false; //dont make no babbies if yall aint got room!
   }
