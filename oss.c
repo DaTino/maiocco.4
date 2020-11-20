@@ -281,8 +281,8 @@ int main(int argc, char *argv[]) {
           char simpidstring[16], msgidstring[16];
           sprintf(simpidstring, "%d", availablePID);
           sprintf(msgidstring, "%d", msqid);
-          char *args[4]={"./user", simpidstring, msgidstring, NULL};
-          printf("execing %s\n", args);
+          char *args[4]={"./user", simpidstring, msgidstring, (char*) NULL};
+          printf("execing %s %s %s\n", "./user", simpidstring, msgidstring);
           execvp("./user", args);
           exit(0);
       }
