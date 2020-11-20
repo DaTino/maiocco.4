@@ -70,7 +70,7 @@ int main(int argc, char *argv[]){
   //message queue mess down here
   struct msgBuffer mb;
   key_t msgKey = 612;
-  if ((msqid = msgget(msgKey, 0666 | IPC_CREAT)) < 0) {
+  if ((msqid = msgget(msgKey, 0666)) < 0) {
     perror("user: error creating message queue.");
     exit(1);
   }
