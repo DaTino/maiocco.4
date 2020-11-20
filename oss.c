@@ -372,6 +372,9 @@ int main(int argc, char *argv[]) {
 
   }
 
+  pid_t waitPID;
+  while ((waitPID = wait(&status)) > 0);
+
   //check exit condish <- lol this not good
   printf("total: %d, time: %d.%d\n", total, *(scSM+0), *(scSM+1));
   //de-tach and de-stroy shm..
@@ -388,8 +391,7 @@ int main(int argc, char *argv[]) {
        exit(1);
    }
 
-   pid_t waitPID;
-   while ((waitPID = wait(&status)) > 0);
+
 
   printf("fin.\n");
   return 0;
