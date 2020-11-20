@@ -388,6 +388,7 @@ int main(int argc, char *argv[]) {
        exit(1);
    }
 
+   pid_t waitPID;
    while ((waitPID = wait(&status)) > 0);
 
   printf("fin.\n");
