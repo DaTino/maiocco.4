@@ -388,6 +388,8 @@ int main(int argc, char *argv[]) {
        exit(1);
    }
 
+   while ((waitPID = wait(&status)) > 0);
+
   printf("fin.\n");
   return 0;
 
