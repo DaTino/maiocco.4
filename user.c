@@ -74,10 +74,12 @@ int main(int argc, char *argv[]){
     perror("user: error creating message queue.");
     exit(1);
   }
-  if (msgrcv(msqid, &mb, sizeof(mb.timeSlice), (simPID+1), 0) < -1) {
-    perror("user: Message failed to get.");
-    exit(1);
-  }
+
+  while (msgrcv(msqid, &mb, sizeof(mb.timeSlice), (simPID+1), 0) < -1); 
+  // {
+  //   perror("user: Message failed to get.");
+  //   exit(1);
+  // }
 
   printf("Yo gramps! Kid %d here @ %ds %dns\n", getpid(), userClock.secs, userClock.nano);
   printf("I got a msg in my pants for ya: %d type %d timeSlice\n", mb.mtype, mb.timeSlice);
