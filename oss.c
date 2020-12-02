@@ -394,6 +394,7 @@ int main(int argc, char *argv[]) {
 
 
   printf("fin.\n");
+  fclose(outfile);
   return 0;
 
 }
@@ -492,8 +493,6 @@ bool canMakeProc(int maxProc, int proc_count, int *simPIDarray, shareClock sysCl
     return false;
   }
 
-
-  fclose(outfile);
 
   return true;
 
