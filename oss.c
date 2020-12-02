@@ -492,6 +492,9 @@ bool canMakeProc(int maxProc, int proc_count, int *simPIDarray, shareClock sysCl
     return false;
   }
 
+
+  fclose(outfile);
+
   return true;
 
 }
